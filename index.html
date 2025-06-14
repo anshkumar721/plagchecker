@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Plagiarism Checker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.8s ease-in-out;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .animate-fadeInScale {
+            animation: fadeInScale 0.5s ease-out forwards;
+        }
+        .btn-animation {
+            transition: all 0.3s ease;
+        }
+        .btn-animation:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+        .btn-animation:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-200 via-purple-200 to-pink-200 flex flex-col justify-center items-center min-h-screen p-4">
+    <div class="bg-white rounded-3xl shadow-xl p-8 w-full md:max-w-4xl lg:max-w-5xl xl:max-w-6xl transition-all duration-300 hover:shadow-2xl mb-8 border border-gray-50 relative">
+        <img src="https://placehold.co/70x70/6A5ACD/FFFFFF?text=AI" alt="AI Logo" class="absolute top-6 left-6 h-16 w-16 rounded-full shadow-lg z-10">
+
+        <div class="text-center mb-8 pt-4">
+            <h1 class="text-5xl font-extrabold text-indigo-700 drop-shadow-lg mb-2">AI Plagiarism Checker</h1>
+            <p class="text-lg text-gray-600 mb-1">Project By: <span class="font-semibold text-gray-700">Ansh Kumar</span></p>
+            <p class="text-lg text-gray-600">Guided By: <span class="font-semibold text-gray-700">Dr. Awais Ahmed</span></p>
+        </div>
+
+        <div class="mb-6">
+            <label for="text-input" class="block text-gray-800 text-lg font-semibold mb-3">Enter the text to check:</label>
+            <textarea id="text-input" placeholder="Paste your article, essay, or any text here to check for originality..." class="shadow-inner appearance-none border border-gray-300 rounded-xl w-full py-4 px-5 text-gray-800 leading-tight focus:outline-none focus:ring-3 focus:ring-blue-400 focus:border-blue-400 h-48 resize-y transition-all duration-300 text-base"></textarea>
+        </div>
+
+        <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 mb-6">
+            <button id="check-button" class="flex-1 px-8 py-4 text-white font-bold rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-300 transition duration-300 ease-in-out
+                bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 border-b-4 border-blue-800 hover:border-blue-900 shadow-lg btn-animation">
+                Check Plagiarism
+            </button>
+            <button id="reset-button" class="flex-1 px-8 py-4 text-white font-bold rounded-xl focus:outline-none focus:ring-4 focus:ring-red-300 transition duration-300 ease-in-out
+                bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 border-b-4 border-red-800 hover:border-red-900 shadow-lg btn-animation">
+                Reset
+            </button>
+        </div>
+
+        <div id="result-display" class="mt-10 flex flex-col sm:flex-row items-center justify-center space-y-8 sm:space-y-0 sm:space-x-12 hidden animate-fadeInScale p-4 bg-gray-50 rounded-2xl border border-gray-100 shadow-inner">
+            <div class="relative w-48 h-48 flex-shrink-0">
+                <svg class="w-full h-full" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+                    <circle class="text-gray-200" stroke="currentColor" stroke-width="3" fill="none" cx="18" cy="18" r="16"></circle>
+                    <circle id="original-circle" class="progress-ring__circle text-green-500" stroke="currentColor" stroke-width="3" fill="none" cx="18" cy="18" r="16" stroke-dasharray="100" stroke-dashoffset="0"></circle>
+                    <circle id="plagiarism-circle" class="progress-ring__circle text-red-500" stroke="currentColor" stroke-width="3" fill="none" cx="18" cy="18" r="16" stroke-dasharray="100" stroke-dashoffset="100"></circle>
+                </svg>
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-3xl font-extrabold text-gray-800" id="percentage-display">0%</div>
+            </div>
+            <div id="result-text-container" class="p-6 bg-white rounded-xl border border-gray-200 w-full flex-grow shadow-md">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">Analysis Result:</h2>
+                <p id="result-text" class="text-gray-700 text-lg leading-relaxed mb-4"></p>
+
+                <div id="found-sources-section" class="mt-4 hidden">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-3 border-b pb-2">Found Sources (Web Search):</h3>
+                    <ul id="found-sources-list" class="list-disc list-inside text-gray-700 space-y-1"></ul>
+                    <p id="no-sources-message" class="text-gray-600 italic text-sm mt-2 hidden">No direct web sources found for this text fragment or search yielded no relevant results.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="loading-indicator" class="mt-8 text-center text-gray-700 hidden py-4 px-6 bg-blue-50 rounded-xl border border-blue-200 shadow-md">
+            <svg class="animate-spin h-8 w-8 mx-auto mb-3 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="text-xl font-semibold">Checking for plagiarism... Please wait.</span>
+        </div>
+
+        <div class="mt-12 p-8 bg-gray-50 rounded-2xl shadow-lg border border-gray-100">
+            <h2 class="text-3xl font-bold text-gray-800 text-center mb-6">Past Plagiarism Checks</h2>
+            <p id="user-id-display" class="text-sm text-gray-500 text-center mb-4">User ID: <span id="current-user-id">Guest</span></p>
+            <div id="history-list-container" class="space-y-4">
+                <p id="no-history-message" class="text-center text-gray-500 italic">No history found yet. Perform a check to see it here!</p>
+            </div>
+            <button id="refresh-history" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-200 btn-animation">
+                Refresh History
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const textInput = document.getElementById('text-input');
+            const checkButton = document.getElementById('check-button');
+            const resetButton = document.getElementById('reset-button');
+            const resultDisplay = document.getElementById('result-display');
+            const resultText = document.getElementById('result-text');
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const plagiarismCircle = document.getElementById('plagiarism-circle');
+            const originalCircle = document.getElementById('original-circle');
+            const percentageDisplay = document.getElementById('percentage-display');
+            const foundSourcesSection = document.getElementById('found-sources-section');
+            const foundSourcesList = document.getElementById('found-sources-list');
+            const noSourcesMessage = document.getElementById('no-sources-message');
+            const historyListContainer = document.getElementById('history-list-container');
+            const noHistoryMessage = document.getElementById('no-history-message');
+            const userIdDisplay = document.getElementById('current-user-id');
+            const refreshHistoryButton = document.getElementById('refresh-history');
+
+            // Generate a unique user ID for this session (or use authentication in a real app)
+            const userId = 'user-' + Math.random().toString(36).substr(2, 9);
+            userIdDisplay.textContent = userId;
+
+            const radius = plagiarismCircle.r.baseVal.value;
+            const circumference = 2 * Math.PI * radius;
+
+            plagiarismCircle.style.strokeDasharray = `${circumference} ${circumference}`;
+            originalCircle.style.strokeDasharray = `${circumference} ${circumference}`;
+
+            function setProgress(circleElement, percent) {
+                const offset = circumference - percent / 100 * circumference;
+                circleElement.style.strokeDashoffset = offset;
+            }
+
+            function showLoading() {
+                loadingIndicator.classList.remove('hidden');
+                resultDisplay.classList.add('hidden');
+                resultDisplay.classList.remove('animate-fadeInScale');
+                foundSourcesSection.classList.add('hidden');
+            }
+
+            function hideLoading() {
+                loadingIndicator.classList.add('hidden');
+            }
+
+            function displayResult(message, similarityScore = 0, sources = [], isPlagiarized = false) {
+                hideLoading();
+                resultText.textContent = message;
+                percentageDisplay.textContent = `${similarityScore.toFixed(0)}%`;
+
+                const plagiarizedPercent = similarityScore;
+                setProgress(originalCircle, 100 - plagiarizedPercent);
+                setProgress(plagiarismCircle, plagiarizedPercent);
+
+                if (plagiarizedPercent > 50) {
+                    plagiarismCircle.classList.remove('text-red-500');
+                    plagiarismCircle.classList.add('text-red-600');
+                    originalCircle.classList.remove('text-green-500');
+                    originalCircle.classList.add('text-green-400');
+                } else {
+                    plagiarismCircle.classList.remove('text-red-600');
+                    plagiarismCircle.classList.add('text-red-500');
+                    originalCircle.classList.remove('text-green-400');
+                    originalCircle.classList.add('text-green-500');
+                }
+
+                foundSourcesList.innerHTML = '';
+                if (sources && sources.length > 0) {
+                    sources.forEach(source => {
+                        const listItem = document.createElement('li');
+                        const link = document.createElement('a');
+                        link.href = source;
+                        link.textContent = source;
+                        link.target = '_blank';
+                        link.classList.add('text-blue-600', 'hover:underline', 'break-all');
+                        listItem.appendChild(link);
+                        foundSourcesList.appendChild(listItem);
+                    });
+                    foundSourcesSection.classList.remove('hidden');
+                    noSourcesMessage.classList.add('hidden');
+                } else {
+                    foundSourcesSection.classList.remove('hidden');
+                    noSourcesMessage.classList.remove('hidden');
+                }
+
+                resultDisplay.classList.remove('hidden');
+                resultDisplay.classList.add('animate-fadeInScale');
+
+                // Refresh history after new check
+                loadHistory();
+            }
+
+            function loadHistory() {
+                fetch('/get-history', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        limit: 10
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    historyListContainer.innerHTML = '';
+                    if (data.history && data.history.length > 0) {
+                        noHistoryMessage.classList.add('hidden');
+                        data.history.forEach(item => {
+                            const historyItem = document.createElement('div');
+                            historyItem.className = 'bg-white p-4 rounded-lg shadow-sm border border-gray-100';
+
+                            const isPlagiarizedClass = item.is_plagiarized ? 'text-red-600' : 'text-green-600';
+
+                            historyItem.innerHTML = `
+                                <p class="text-sm text-gray-500 mb-1">${new Date(item.timestamp).toLocaleString()}</p>
+                                <p class="font-semibold text-gray-800 mb-2">Text: <span class="font-normal text-gray-700">${item.text.substring(0, 100)}...</span></p>
+                                <p class="text-gray-700">Result: <span class="font-medium ${isPlagiarizedClass}">${item.message}</span></p>
+                                <p class="text-gray-700">Similarity: <span class="font-medium">${item.similarity_score.toFixed(2)}%</span></p>
+                                ${item.sources && item.sources.length > 0 ? `
+                                    <div class="mt-2">
+                                        <p class="text-sm font-medium text-gray-600">Sources:</p>
+                                        <ul class="list-disc list-inside text-xs text-blue-500">
+                                            ${item.sources.map(src => `<li><a href="${src}" target="_blank" class="hover:underline break-all">${src}</a></li>`).join('')}
+                                        </ul>
+                                    </div>
+                                ` : ''}
+                            `;
+                            historyListContainer.appendChild(historyItem);
+                        });
+                    } else {
+                        noHistoryMessage.classList.remove('hidden');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading history:', error);
+                    historyListContainer.innerHTML = `<p class="text-center text-red-500">Error loading history: ${error.message}</p>`;
+                });
+            }
+
+            resetButton.addEventListener('click', () => {
+                textInput.value = '';
+                resultDisplay.classList.add('hidden');
+                resultDisplay.classList.remove('animate-fadeInScale');
+                hideLoading();
+                setProgress(plagiarismCircle, 0);
+                setProgress(originalCircle, 100);
+                percentageDisplay.textContent = '0%';
+                foundSourcesSection.classList.add('hidden');
+                foundSourcesList.innerHTML = '';
+                noSourcesMessage.classList.add('hidden');
+            });
+
+            checkButton.addEventListener('click', () => {
+                const textToCheck = textInput.value.trim();
+
+                if (!textToCheck) {
+                    alert('Please enter text to check for plagiarism.');
+                    return;
+                }
+
+                showLoading();
+
+                fetch('/check-plagiarism', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: textToCheck,
+                        user_id: userId
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => { throw new Error(err.error || 'Server error'); });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    displayResult(data.message, data.similarity_score, data.sources, data.is_plagiarized);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    displayResult(`An error occurred: ${error.message}. Please try again.`, 0, [], false);
+                });
+            });
+
+            refreshHistoryButton.addEventListener('click', loadHistory);
+
+            // Load initial history
+            loadHistory();
+        });
+    </script>
+</body>
+</html>
