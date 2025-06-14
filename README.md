@@ -1,4 +1,5 @@
 AI Plagiarism Checker
+
 A Flask-based web application that allows users to check text for plagiarism against a pre-trained machine learning model and detect potential similarities with web sources. It also includes a local database to keep a history of all checks performed.
 
 Table of Contents
@@ -11,6 +12,7 @@ Project Structure
 Future Enhancements
 License
 About the Project
+
 This project aims to provide a simple yet effective tool for checking text originality. It leverages a machine learning model (Logistic Regression with TF-IDF) to determine the likelihood of plagiarism based on a provided dataset and integrates with Google Custom Search API to find potential online sources. All checks are logged into a local SQLite database, offering a convenient history review.
 
 Note: The current AI detection logic and web search integration use placeholder functions for simplicity. For robust plagiarism detection and AI-generated text identification, you would integrate more sophisticated models and potentially advanced search capabilities.
